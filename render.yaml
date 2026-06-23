@@ -1,0 +1,46 @@
+# Render Blueprint — defines the full stack as code so deploys are reproducible.
+# Apply via: dashboard.render.com → New → Blueprint → connect this repo.
+
+services:
+  - type: web
+    name: portfolio-api
+    runtime: docker
+    region: oregon
+    plan: free
+    rootDir: api
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: prod
+      - key: APP_LOG_LEVEL
+        value: INFO
+      - key: APP_LOG_FORMAT
+        value: json
+      - key: APP_CORS_ORIGINS
+        value: '["*"]'
+      - key: PORT
+        value: "8000"
+
+  - type: web
+    name: portfolio-web
+    runtime: docker
+    region: oregon
+    plan: free
+    rootDir: web
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: API_BASE_URL
+        fromService:
+          type: web
+          name: portfolio-api
+          property: hostport
