@@ -10,12 +10,6 @@
 
 🔗 **Live:** [portfolio.kshama.dev](https://portfolio.kshama.dev) · **API:** [portfolio-api.fly.dev/docs](https://portfolio-api.fly.dev/docs) · **Grafana:** [grafana.kshama.dev](https://grafana.kshama.dev/d/portfolio-platform)
 
-## Why this exists
-
-I'm a Site Reliability Engineer ([IBM, EASeJ + IBM MQ team](https://www.linkedin.com/in/kshama-bhatt-28941724a)) heading to UPenn in Fall 2026. My day job is OpenShift / ArgoCD / Prometheus / SOC2 — but my GitHub used to look like a collection of Jupyter notebooks from undergrad. This project is the bridge: I took the actual ML research from my undergraduate capstone — Deep Reinforcement Learning for portfolio optimization (PPO, DDPG, A2C, SAC, TD3 trained on NIFTY 50) — and rebuilt it as a service I'd be comfortable running on-call.
-
-The point isn't the optimizer. **The point is the wrapper.**
-
 ## What's in here
 
 ```
