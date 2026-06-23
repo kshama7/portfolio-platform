@@ -39,8 +39,7 @@ services:
         value: production
       - key: PORT
         value: "3000"
+      # Point at the public api URL. Render's internal fromService networking
+      # is more elegant but had a regression on free-tier; this is bulletproof.
       - key: API_BASE_URL
-        fromService:
-          type: web
-          name: portfolio-api
-          property: hostport
+        value: https://portfolio-api-9exp.onrender.com
