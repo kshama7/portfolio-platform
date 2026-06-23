@@ -2,13 +2,15 @@
 
 > Production-grade Deep RL + classical portfolio optimization service. Five DRL agents (PPO, DDPG, A2C, SAC, TD3) and four classical optimizers (Markowitz, Max Sharpe, Min Vol, HRP) behind a FastAPI service, Next.js dashboard, GitOps deployment, Prometheus-backed SLOs and a runbook.
 
-[![ci](https://img.shields.io/badge/ci-passing-22c55e)](.github/workflows/ci.yml)
-[![image](https://img.shields.io/badge/image-ghcr.io%2Fkshama7%2Fportfolio--platform-blue)](https://github.com/users/kshama7/packages)
+[![live demo](https://img.shields.io/badge/live%20demo-portfolio--web--iu0h.onrender.com-22d3ee?logo=render&logoColor=white)](https://portfolio-web-iu0h.onrender.com)
+[![api docs](https://img.shields.io/badge/api-swagger-22d3ee)](https://portfolio-api-9exp.onrender.com/docs)
 [![SLO](https://img.shields.io/badge/SLO-99.5%25%20%E2%80%A2%20p95%20%3C%201s-22d3ee)](docs/SLO.md)
 [![helm](https://img.shields.io/badge/helm-v3.17-0f1689)](infra/helm/portfolio-platform)
 [![argocd](https://img.shields.io/badge/argocd-v2-ef7b4d)](infra/argocd)
 
-🔗 **Live:** [portfolio.kshama.dev](https://portfolio.kshama.dev) · **API:** [portfolio-api.fly.dev/docs](https://portfolio-api.fly.dev/docs) · **Grafana:** [grafana.kshama.dev](https://grafana.kshama.dev/d/portfolio-platform)
+🔗 **Live dashboard:** [portfolio-web-iu0h.onrender.com](https://portfolio-web-iu0h.onrender.com) · **API:** [portfolio-api-9exp.onrender.com/docs](https://portfolio-api-9exp.onrender.com/docs) · **Metrics:** [/metrics](https://portfolio-api-9exp.onrender.com/metrics)
+
+> *Free Render tier — first hit after 15 min idle takes ~30 sec to wake the container, then sub-second per backtest. K8s production deployment (Helm + ArgoCD) is in `infra/`; Render is the public demo so you can click without setting anything up.*
 
 ## What's in here
 
