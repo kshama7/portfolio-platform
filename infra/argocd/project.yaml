@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: portfolio-platform
+  namespace: argocd
+spec:
+  description: Portfolio Platform applications across environments
+  sourceRepos:
+    - https://github.com/kshama7/portfolio-platform.git
+  destinations:
+    - namespace: 'portfolio-platform*'
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  orphanedResources:
+    warn: true
+  roles:
+    - name: read-only
+      description: read-only access for observers
+      policies:
+        - p, proj:portfolio-platform:read-only, applications, get, portfolio-platform/*, allow

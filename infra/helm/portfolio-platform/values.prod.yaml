@@ -1,0 +1,33 @@
+global:
+  environment: prod
+
+api:
+  replicaCount: 3
+  image:
+    tag: "0.1.0"
+  resources:
+    requests:
+      cpu: 300m
+      memory: 512Mi
+    limits:
+      cpu: 1500m
+      memory: 1Gi
+  autoscaling:
+    minReplicas: 3
+    maxReplicas: 20
+  env:
+    APP_ENV: prod
+    APP_LOG_LEVEL: INFO
+
+web:
+  replicaCount: 3
+  autoscaling:
+    minReplicas: 3
+    maxReplicas: 10
+
+ingress:
+  host: portfolio.kshama.dev
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: 1m
+    nginx.ingress.kubernetes.io/rate-limit-connections: "100"

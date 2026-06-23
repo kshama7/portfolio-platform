@@ -1,0 +1,95 @@
+groups:
+  - name: portfolio-platform.slo-burn-rate
+    rules:
+      # Multi-window, multi-burn-rate alerts based on Google SRE Workbook.
+      # SLO: 99.5% of /api/v1/* requests must succeed (2xx/4xx, no 5xx) measured over 30 days.
+      # Error budget: 0.5% of requests = 0.005
+
+      - alert: APIErrorBudgetBurnFast
+        expr: |
+          (
+            (1 - portfolio:slo_availability_ratio:5m) > (14.4 * 0.005)
+          )
+          and
+          (
+            (1 - (
+              sum(rate(http_requests_total{service="portfolio-api",status=~"5..",route=~"/api/v1/.*"}[1h]))
+              / clamp_min(sum(rate(http_requests_total{service="portfolio-api",route=~"/api/v1/.*"}[1h])), 0.0001)
+            )) > (14.4 * 0.005)
+          )
+        for: 2m
+        labels:
+          severity: page
+          slo: availability
+          burnrate: fast
+        annotations:
+          summary: "Fast error-budget burn — 2% budget in 1h"
+          description: |
+            5xx rate over both 5m and 1h windows exceeds 14.4x the long-term
+            budget. At this rate we burn 2% of the 30-day error budget every hour.
+            Runbook: docs/RUNBOOK.md#APIErrorBudgetBurnFast
+
+      - alert: APIErrorBudgetBurnSlow
+        expr: |
+          (
+            (1 - portfolio:slo_availability_ratio:5m) > (6 * 0.005)
+          )
+          and
+          (
+            (1 - (
+              sum(rate(http_requests_total{service="portfolio-api",status=~"5..",route=~"/api/v1/.*"}[6h]))
+              / clamp_min(sum(rate(http_requests_total{service="portfolio-api",route=~"/api/v1/.*"}[6h])), 0.0001)
+            )) > (6 * 0.005)
+          )
+        for: 15m
+        labels:
+          severity: ticket
+          slo: availability
+          burnrate: slow
+        annotations:
+          summary: "Slow error-budget burn — 5% budget in 6h"
+          description: |
+            Sustained 6x burn rate. Investigate during business hours.
+            Runbook: docs/RUNBOOK.md#APIErrorBudgetBurnSlow
+
+  - name: portfolio-platform.health
+    rules:
+      - alert: APIDown
+        expr: up{service="portfolio-api"} == 0
+        for: 1m
+        labels:
+          severity: page
+        annotations:
+          summary: "API target {{ $labels.instance }} unreachable"
+          description: "Prometheus failed to scrape API for 1m. Runbook: docs/RUNBOOK.md#APIDown"
+
+      - alert: APIHighLatency
+        expr: portfolio:http_p95_latency:5m{route=~"/api/v1/(optimize|backtest)"} > 2
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "p95 latency on {{ $labels.route }} is {{ $value | humanizeDuration }}"
+          description: |
+            p95 over 5m exceeds 2s for 10m. Check optimizer compute time.
+            Runbook: docs/RUNBOOK.md#APIHighLatency
+
+      - alert: APIErrorRateHigh
+        expr: portfolio:http_error_rate:5m > 0.05
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: "5xx rate on {{ $labels.route }} is {{ $value | humanizePercentage }}"
+          description: "5xx rate > 5% for 5m. Runbook: docs/RUNBOOK.md#APIErrorRateHigh"
+
+      - alert: OptimizerFailureRateHigh
+        expr: |
+          sum(rate(optimize_runs_total{status="error"}[5m])) by (strategy)
+            / clamp_min(sum(rate(optimize_runs_total[5m])) by (strategy), 0.0001) > 0.10
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "Optimizer {{ $labels.strategy }} failing > 10%"
+          description: "Investigate strategy-level errors. Runbook: docs/RUNBOOK.md#OptimizerFailureRateHigh"

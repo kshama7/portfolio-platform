@@ -1,0 +1,20 @@
+{{- if and .Values.api.enabled .Values.api.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "portfolio-platform.fullname" . }}-api
+  labels:
+    {{- include "portfolio-platform.labels" . | nindent 4 }}
+    {{- with .Values.api.serviceMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "portfolio-platform.api.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.api.serviceMonitor.interval }}
+      scrapeTimeout: {{ .Values.api.serviceMonitor.scrapeTimeout }}
+{{- end }}

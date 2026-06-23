@@ -1,0 +1,38 @@
+groups:
+  - name: portfolio-platform.recording
+    interval: 30s
+    rules:
+      - record: portfolio:http_request_rate:5m
+        expr: sum(rate(http_requests_total{service="portfolio-api"}[5m])) by (route)
+
+      - record: portfolio:http_error_rate:5m
+        expr: |
+          sum(rate(http_requests_total{service="portfolio-api",status=~"5.."}[5m])) by (route)
+            / clamp_min(sum(rate(http_requests_total{service="portfolio-api"}[5m])) by (route), 0.0001)
+
+      - record: portfolio:http_p95_latency:5m
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{service="portfolio-api"}[5m])) by (le, route)
+          )
+
+      - record: portfolio:http_p99_latency:5m
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_request_duration_seconds_bucket{service="portfolio-api"}[5m])) by (le, route)
+          )
+
+      - record: portfolio:slo_availability_ratio:5m
+        expr: |
+          1 - (
+            sum(rate(http_requests_total{service="portfolio-api",status=~"5..",route=~"/api/v1/.*"}[5m]))
+            / clamp_min(sum(rate(http_requests_total{service="portfolio-api",route=~"/api/v1/.*"}[5m])), 0.0001)
+          )
+
+      - record: portfolio:slo_latency_ratio:5m
+        expr: |
+          sum(rate(http_request_duration_seconds_bucket{service="portfolio-api",route=~"/api/v1/.*",le="1.0"}[5m]))
+          / clamp_min(sum(rate(http_request_duration_seconds_count{service="portfolio-api",route=~"/api/v1/.*"}[5m])), 0.0001)
+
+      - record: portfolio:optimize_runs_rate:5m
+        expr: sum(rate(optimize_runs_total[5m])) by (strategy, status)

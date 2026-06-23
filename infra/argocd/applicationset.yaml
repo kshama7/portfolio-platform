@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: portfolio-platform-envs
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - env: dev
+            cluster: https://kubernetes.default.svc
+            namespace: portfolio-platform-dev
+            valueFile: values.dev.yaml
+            revision: HEAD
+          - env: staging
+            cluster: https://kubernetes.default.svc
+            namespace: portfolio-platform-staging
+            valueFile: values.staging.yaml
+            revision: HEAD
+          - env: prod
+            cluster: https://kubernetes.default.svc
+            namespace: portfolio-platform-prod
+            valueFile: values.prod.yaml
+            revision: main
+  template:
+    metadata:
+      name: 'portfolio-platform-{{env}}'
+      labels:
+        env: '{{env}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/kshama7/portfolio-platform.git
+        targetRevision: '{{revision}}'
+        path: infra/helm/portfolio-platform
+        helm:
+          releaseName: 'portfolio-platform-{{env}}'
+          valueFiles:
+            - values.yaml
+            - '{{valueFile}}'
+      destination:
+        server: '{{cluster}}'
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true

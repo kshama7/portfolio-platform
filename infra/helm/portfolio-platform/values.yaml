@@ -1,0 +1,113 @@
+global:
+  environment: prod
+  imageRegistry: ghcr.io/kshama7
+
+api:
+  enabled: true
+  image:
+    repository: ghcr.io/kshama7/portfolio-platform-api
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  port: 8000
+  resources:
+    requests:
+      cpu: 200m
+      memory: 384Mi
+    limits:
+      cpu: 1000m
+      memory: 768Mi
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 75
+  probes:
+    readiness:
+      path: /readyz
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+    liveness:
+      path: /healthz
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 5
+      failureThreshold: 3
+    startup:
+      path: /healthz
+      periodSeconds: 5
+      failureThreshold: 30
+  env:
+    APP_ENV: prod
+    APP_LOG_LEVEL: INFO
+    APP_LOG_FORMAT: json
+  serviceMonitor:
+    enabled: true
+    interval: 15s
+    scrapeTimeout: 10s
+    labels:
+      release: kube-prometheus-stack
+
+web:
+  enabled: true
+  image:
+    repository: ghcr.io/kshama7/portfolio-platform-web
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+  env:
+    NEXT_PUBLIC_API_BASE: http://portfolio-platform-api.portfolio-platform.svc.cluster.local:8000
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: 1m
+  host: portfolio.example.com
+  tls:
+    enabled: true
+    secretName: portfolio-tls
+
+networkPolicy:
+  enabled: true
+  allowFromNamespaces:
+    - ingress-nginx
+    - monitoring
+
+serviceAccount:
+  create: true
+  annotations: {}
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]

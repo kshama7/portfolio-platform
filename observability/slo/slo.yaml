@@ -1,0 +1,73 @@
+# OpenSLO-style SLO definition for portfolio-platform.
+# Two SLIs guard the user-facing /api/v1/* surface: availability and latency.
+apiVersion: openslo/v1
+kind: SLO
+metadata:
+  name: portfolio-api-availability
+  displayName: Portfolio API — Availability
+spec:
+  service: portfolio-api
+  description: |
+    Fraction of /api/v1/* responses that are not 5xx.
+    Measured over a rolling 30-day window.
+  budgetingMethod: Occurrences
+  objectives:
+    - displayName: 99.5% availability
+      target: 0.995
+  timeWindow:
+    - duration: 30d
+      isRolling: true
+  indicator:
+    metadata:
+      name: api-success-ratio
+    spec:
+      ratioMetric:
+        good:
+          metricSource:
+            type: prometheus
+            spec:
+              query: |
+                sum(rate(http_requests_total{service="portfolio-api",route=~"/api/v1/.*",status!~"5.."}[5m]))
+        total:
+          metricSource:
+            type: prometheus
+            spec:
+              query: |
+                sum(rate(http_requests_total{service="portfolio-api",route=~"/api/v1/.*"}[5m]))
+  alertPolicies:
+    - portfolio-api-availability-burn-rate
+
+---
+apiVersion: openslo/v1
+kind: SLO
+metadata:
+  name: portfolio-api-latency
+  displayName: Portfolio API — Latency
+spec:
+  service: portfolio-api
+  description: |
+    95% of /api/v1/* requests must complete in under 1s.
+  budgetingMethod: Occurrences
+  objectives:
+    - displayName: 95% under 1s
+      target: 0.95
+  timeWindow:
+    - duration: 30d
+      isRolling: true
+  indicator:
+    metadata:
+      name: api-latency-ratio
+    spec:
+      ratioMetric:
+        good:
+          metricSource:
+            type: prometheus
+            spec:
+              query: |
+                sum(rate(http_request_duration_seconds_bucket{service="portfolio-api",route=~"/api/v1/.*",le="1.0"}[5m]))
+        total:
+          metricSource:
+            type: prometheus
+            spec:
+              query: |
+                sum(rate(http_request_duration_seconds_count{service="portfolio-api",route=~"/api/v1/.*"}[5m]))

@@ -1,0 +1,36 @@
+# Chaos Mesh experiment: kill one API pod and ensure SLOs remain green.
+# Apply with: kubectl apply -f tests/chaos/pod-kill.yaml -n portfolio-platform
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: api-pod-kill
+spec:
+  action: pod-kill
+  mode: one
+  duration: "10s"
+  selector:
+    labelSelectors:
+      app.kubernetes.io/component: api
+      app.kubernetes.io/name: portfolio-platform
+  scheduler:
+    cron: "@every 1h"
+---
+# NetworkChaos: 100ms latency to yfinance host for 5 minutes — tests local-fallback path.
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: yfinance-latency
+spec:
+  action: delay
+  mode: all
+  selector:
+    labelSelectors:
+      app.kubernetes.io/component: api
+  delay:
+    latency: "500ms"
+    jitter: "100ms"
+  duration: "5m"
+  direction: to
+  externalTargets:
+    - query1.finance.yahoo.com
+    - query2.finance.yahoo.com

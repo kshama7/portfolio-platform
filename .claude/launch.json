@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": [
+        "-lc",
+        "cd /Users/kshama/Documents/Claude/Projects/portfolio-platform/api && PYTHONPATH=. .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --log-level warning"
+      ],
+      "port": 8000
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": [
+        "-lc",
+        "cd /Users/kshama/Documents/Claude/Projects/portfolio-platform/web && export PATH=/Users/kshama/.nvm/versions/node/v18.20.6/bin:$PATH && NEXT_PUBLIC_API_BASE=http://localhost:8000 npm run dev"
+      ],
+      "port": 3000
+    }
+  ]
+}

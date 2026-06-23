@@ -1,0 +1,67 @@
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-0.1.0-dev}
+    image: ghcr.io/kshama7/portfolio-platform-api:${APP_VERSION:-dev}
+    container_name: portfolio-api
+    environment:
+      APP_ENV: dev
+      APP_LOG_LEVEL: INFO
+      APP_LOG_FORMAT: json
+      APP_CORS_ORIGINS: '["*"]'
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    image: ghcr.io/kshama7/portfolio-platform-web:${APP_VERSION:-dev}
+    container_name: portfolio-web
+    environment:
+      NEXT_PUBLIC_API_BASE: http://api:8000
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.0.1
+    container_name: portfolio-prometheus
+    volumes:
+      - ./observability/prometheus/prometheus.local.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus/rules.yaml:/etc/prometheus/rules.yaml:ro
+      - ./observability/prometheus/alerts.yaml:/etc/prometheus/alerts.yaml:ro
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=2d
+    ports:
+      - "9090:9090"
+    depends_on: [api]
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: portfolio-grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3001:3000"
+    depends_on: [prometheus]

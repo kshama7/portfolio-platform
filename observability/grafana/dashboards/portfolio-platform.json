@@ -1,0 +1,177 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "row",
+      "title": "Golden signals (RED)",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+      "collapsed": false
+    },
+    {
+      "type": "stat",
+      "title": "Availability (5m)",
+      "gridPos": {"h": 5, "w": 6, "x": 0, "y": 1},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 3,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "red", "value": null},
+            {"color": "orange", "value": 0.99},
+            {"color": "green", "value": 0.995}
+          ]}
+        }
+      },
+      "options": {"colorMode": "background", "graphMode": "area", "textMode": "auto"},
+      "targets": [
+        {"expr": "avg(portfolio:slo_availability_ratio:5m)", "refId": "A"}
+      ],
+      "datasource": {"type": "prometheus", "uid": "prometheus"}
+    },
+    {
+      "type": "stat",
+      "title": "p95 latency (5m)",
+      "gridPos": {"h": 5, "w": 6, "x": 6, "y": 1},
+      "fieldConfig": {"defaults": {"unit": "s", "decimals": 3,
+        "thresholds": {"mode": "absolute", "steps": [
+          {"color": "green", "value": null},
+          {"color": "orange", "value": 0.5},
+          {"color": "red", "value": 1}
+        ]}}},
+      "targets": [{"expr": "avg(portfolio:http_p95_latency:5m{route=~\"/api/v1/.*\"})", "refId": "A"}],
+      "datasource": {"type": "prometheus", "uid": "prometheus"}
+    },
+    {
+      "type": "stat",
+      "title": "Request rate (5m)",
+      "gridPos": {"h": 5, "w": 6, "x": 12, "y": 1},
+      "fieldConfig": {"defaults": {"unit": "reqps", "decimals": 1}},
+      "targets": [{"expr": "sum(portfolio:http_request_rate:5m)", "refId": "A"}],
+      "datasource": {"type": "prometheus", "uid": "prometheus"}
+    },
+    {
+      "type": "stat",
+      "title": "5xx error rate (5m)",
+      "gridPos": {"h": 5, "w": 6, "x": 18, "y": 1},
+      "fieldConfig": {"defaults": {"unit": "percentunit", "decimals": 3,
+        "thresholds": {"mode": "absolute", "steps": [
+          {"color": "green", "value": null},
+          {"color": "orange", "value": 0.005},
+          {"color": "red", "value": 0.05}
+        ]}}},
+      "targets": [{"expr": "avg(portfolio:http_error_rate:5m)", "refId": "A"}],
+      "datasource": {"type": "prometheus", "uid": "prometheus"}
+    },
+
+    {
+      "type": "row",
+      "title": "Traffic & latency",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 6}
+    },
+    {
+      "type": "timeseries",
+      "title": "Request rate by route",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 7},
+      "fieldConfig": {"defaults": {"unit": "reqps"}},
+      "targets": [{"expr": "portfolio:http_request_rate:5m", "legendFormat": "{{route}}", "refId": "A"}],
+      "datasource": {"type": "prometheus", "uid": "prometheus"}
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency p50 / p95 / p99 (compute routes)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 7},
+      "fieldConfig": {"defaults": {"unit": "s"}},
+      "targets": [
+        {"expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{route=~\"/api/v1/(optimize|backtest)\"}[5m])) by (le))", "legendFormat": "p50", "refId": "A"},
+        {"expr": "portfolio:http_p95_latency:5m{route=~\"/api/v1/(optimize|backtest)\"}", "legendFormat": "p95 {{route}}", "refId": "B"},
+        {"expr": "portfolio:http_p99_latency:5m{route=~\"/api/v1/(optimize|backtest)\"}", "legendFormat": "p99 {{route}}", "refId": "C"}
+      ],
+      "datasource": {"type": "prometheus", "uid": "prometheus"}
+    },
+
+    {
+      "type": "row",
+      "title": "SLO & error budget",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 15}
+    },
+    {
+      "type": "timeseries",
+      "title": "Availability SLO (target 99.5%)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "fieldConfig": {"defaults": {"unit": "percentunit", "min": 0.99, "max": 1.0}},
+      "targets": [
+        {"expr": "portfolio:slo_availability_ratio:5m", "legendFormat": "actual", "refId": "A"},
+        {"expr": "0.995", "legendFormat": "target", "refId": "B"}
+      ],
+      "datasource": {"type": "prometheus", "uid": "prometheus"}
+    },
+    {
+      "type": "timeseries",
+      "title": "Error budget burn rate (1h / 6h)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+      "fieldConfig": {"defaults": {"unit": "short"}},
+      "targets": [
+        {"expr": "(1 - (sum(rate(http_requests_total{service=\"portfolio-api\",status=~\"5..\",route=~\"/api/v1/.*\"}[1h])) / clamp_min(sum(rate(http_requests_total{service=\"portfolio-api\",route=~\"/api/v1/.*\"}[1h])), 0.0001))) / 0.005", "legendFormat": "1h burn", "refId": "A"},
+        {"expr": "(1 - (sum(rate(http_requests_total{service=\"portfolio-api\",status=~\"5..\",route=~\"/api/v1/.*\"}[6h])) / clamp_min(sum(rate(http_requests_total{service=\"portfolio-api\",route=~\"/api/v1/.*\"}[6h])), 0.0001))) / 0.005", "legendFormat": "6h burn", "refId": "B"}
+      ],
+      "datasource": {"type": "prometheus", "uid": "prometheus"}
+    },
+
+    {
+      "type": "row",
+      "title": "Business — optimizer activity",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 24}
+    },
+    {
+      "type": "timeseries",
+      "title": "Optimizer runs per strategy",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 25},
+      "fieldConfig": {"defaults": {"unit": "ops"}},
+      "targets": [{"expr": "sum(rate(optimize_runs_total[5m])) by (strategy, status)", "legendFormat": "{{strategy}} ({{status}})", "refId": "A"}],
+      "datasource": {"type": "prometheus", "uid": "prometheus"}
+    },
+    {
+      "type": "timeseries",
+      "title": "Optimizer compute time (p95) per strategy",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 25},
+      "fieldConfig": {"defaults": {"unit": "s"}},
+      "targets": [{"expr": "histogram_quantile(0.95, sum(rate(optimize_duration_seconds_bucket[5m])) by (le, strategy))", "legendFormat": "{{strategy}}", "refId": "A"}],
+      "datasource": {"type": "prometheus", "uid": "prometheus"}
+    },
+    {
+      "type": "timeseries",
+      "title": "Market data fetches",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 33},
+      "fieldConfig": {"defaults": {"unit": "ops"}},
+      "targets": [
+        {"expr": "sum(rate(market_data_fetch_total[5m])) by (source, status)", "legendFormat": "fetch {{source}} ({{status}})", "refId": "A"},
+        {"expr": "sum(rate(market_data_cache_hits_total[5m])) by (source)", "legendFormat": "cache hit {{source}}", "refId": "B"}
+      ],
+      "datasource": {"type": "prometheus", "uid": "prometheus"}
+    },
+    {
+      "type": "timeseries",
+      "title": "In-flight requests",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 33},
+      "fieldConfig": {"defaults": {"unit": "short"}},
+      "targets": [{"expr": "http_requests_in_flight", "legendFormat": "in-flight", "refId": "A"}],
+      "datasource": {"type": "prometheus", "uid": "prometheus"}
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["portfolio-platform", "sre", "mlops"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "Portfolio Platform — Service Overview",
+  "version": 1,
+  "weekStart": ""
+}

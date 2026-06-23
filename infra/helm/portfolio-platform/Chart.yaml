@@ -1,0 +1,18 @@
+apiVersion: v2
+name: portfolio-platform
+description: Production-grade portfolio optimization platform (API + Web)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - mlops
+  - portfolio-optimization
+  - drl
+  - fastapi
+  - nextjs
+maintainers:
+  - name: Kshama Bhatt
+    email: kshama.bhatt7@gmail.com
+home: https://github.com/kshama7/portfolio-platform
+sources:
+  - https://github.com/kshama7/portfolio-platform
