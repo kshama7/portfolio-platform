@@ -55,13 +55,32 @@ export type BacktestStrategyResult = {
   notes: string | null;
 };
 
+export type BenchmarkResult = {
+  ticker: string;
+  dates: string[];
+  equity_curve: number[];
+  metrics: BacktestMetrics;
+};
+
 export type BacktestResponse = {
   tickers: string[];
   start: string;
   end: string;
   initial_capital: number;
   results: BacktestStrategyResult[];
+  benchmark: BenchmarkResult | null;
   compute_ms: number;
+};
+
+export type BacktestRequest = {
+  tickers: string[];
+  start: string;
+  end: string;
+  strategies: string[];
+  data_source?: 'auto' | 'local' | 'yfinance';
+  initial_capital?: number;
+  rebalance?: string;
+  benchmark?: string | null;
 };
 
 async function jsonFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -80,12 +99,13 @@ async function jsonFetch<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   universes: () => jsonFetch<Universe[]>('/api/v1/universes'),
   strategies: () => jsonFetch<string[]>('/api/v1/strategies'),
+  benchmarks: () => jsonFetch<Record<string, string>>('/api/v1/benchmarks'),
   optimize: (req: OptimizeRequest) =>
     jsonFetch<OptimizeResponse>('/api/v1/optimize', {
       method: 'POST',
       body: JSON.stringify(req),
     }),
-  backtest: (req: OptimizeRequest & { initial_capital?: number; rebalance?: string }) =>
+  backtest: (req: BacktestRequest) =>
     jsonFetch<BacktestResponse>('/api/v1/backtest', {
       method: 'POST',
       body: JSON.stringify(req),
@@ -106,4 +126,20 @@ export const STRATEGY_LABELS: Record<string, { label: string; color: string; cat
 
 export function strategyLabel(s: string) {
   return STRATEGY_LABELS[s] || { label: s, color: '#9ca3af', category: 'Other' };
+}
+
+export const BENCHMARK_COLOR = '#fb923c';
+
+export const DATE_PRESETS = [
+  { label: '1Y', years: 1 },
+  { label: '3Y', years: 3 },
+  { label: '5Y', years: 5 },
+  { label: '10Y', years: 10 },
+] as const;
+
+export function presetRange(years: number): { start: string; end: string } {
+  const end = new Date();
+  const start = new Date();
+  start.setFullYear(end.getFullYear() - years);
+  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
 }

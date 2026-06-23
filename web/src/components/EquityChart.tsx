@@ -10,17 +10,34 @@ import {
   CartesianGrid,
   Legend,
 } from 'recharts';
-import type { BacktestStrategyResult } from '@/lib/api';
-import { strategyLabel } from '@/lib/api';
+import type { BacktestResponse, BacktestStrategyResult, BenchmarkResult } from '@/lib/api';
+import { strategyLabel, BENCHMARK_COLOR } from '@/lib/api';
 import { compact, money } from '@/lib/format';
 
-export function EquityChart({ results }: { results: BacktestStrategyResult[] }) {
+export function EquityChart({
+  results,
+  benchmark,
+}: {
+  results: BacktestStrategyResult[];
+  benchmark?: BenchmarkResult | null;
+}) {
   if (results.length === 0) return null;
 
   const dates = results[0].dates;
+  const dateSet = new Set(dates);
+
+  // Build a benchmark lookup keyed on the strategy dates
+  const benchMap: Record<string, number> = {};
+  if (benchmark) {
+    for (let i = 0; i < benchmark.dates.length; i++) {
+      benchMap[benchmark.dates[i]] = benchmark.equity_curve[i];
+    }
+  }
+
   const data = dates.map((d, i) => {
     const row: Record<string, number | string> = { date: d };
     for (const r of results) row[r.strategy] = r.equity_curve[i];
+    if (benchmark && benchMap[d] !== undefined) row['__benchmark__'] = benchMap[d];
     return row;
   });
 
@@ -30,7 +47,12 @@ export function EquityChart({ results }: { results: BacktestStrategyResult[] }) 
         <div>
           <div className="text-sm font-semibold">Equity curve</div>
           <div className="text-xs text-ink-dim">
-            $100k notional, compounded daily — strategy comparison
+            Compounded portfolio value · daily, monthly rebalance
+            {benchmark && (
+              <>
+                {' '}· <span style={{ color: BENCHMARK_COLOR }}>—— {benchmark.ticker}</span> benchmark
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -59,11 +81,16 @@ export function EquityChart({ results }: { results: BacktestStrategyResult[] }) 
               fontSize: 12,
             }}
             labelStyle={{ color: '#9ca3af' }}
-            formatter={(v: number, name: string) => [money(v), strategyLabel(name).label]}
+            formatter={(v: number, name: string) => [
+              money(v),
+              name === '__benchmark__' ? `${benchmark?.ticker} (benchmark)` : strategyLabel(name).label,
+            ]}
           />
           <Legend
             wrapperStyle={{ fontSize: 12 }}
-            formatter={(v) => strategyLabel(v).label}
+            formatter={(v) =>
+              v === '__benchmark__' ? `${benchmark?.ticker} (benchmark)` : strategyLabel(v).label
+            }
             iconType="circle"
           />
           {results.map((r) => (
@@ -77,6 +104,17 @@ export function EquityChart({ results }: { results: BacktestStrategyResult[] }) 
               activeDot={{ r: 4 }}
             />
           ))}
+          {benchmark && (
+            <Line
+              type="monotone"
+              dataKey="__benchmark__"
+              stroke={BENCHMARK_COLOR}
+              strokeWidth={1.75}
+              strokeDasharray="6 4"
+              dot={false}
+              activeDot={{ r: 4 }}
+            />
+          )}
         </LineChart>
       </ResponsiveContainer>
     </div>

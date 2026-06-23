@@ -18,7 +18,7 @@ RUN pip install --upgrade pip && \
         "fastapi==0.115.6" "uvicorn[standard]==0.32.1" \
         "pydantic==2.10.3" "pydantic-settings==2.7.0" \
         "numpy==1.26.4" "pandas==2.2.3" "scipy==1.14.1" \
-        "pyportfolioopt==1.5.6" "scikit-learn==1.6.0" "yfinance==0.2.50" \
+        "pyportfolioopt==1.5.6" "scikit-learn==1.6.0" "yfinance>=1.4.1" \
         "prometheus-client==0.21.1" "structlog==24.4.0" \
         "httpx==0.28.1" "cachetools==5.5.0"
 

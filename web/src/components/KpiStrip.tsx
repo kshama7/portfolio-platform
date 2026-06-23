@@ -1,19 +1,25 @@
 'use client';
 
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
-import type { BacktestStrategyResult } from '@/lib/api';
+import type { BacktestStrategyResult, BenchmarkResult } from '@/lib/api';
 import { strategyLabel } from '@/lib/api';
 import { num, pct } from '@/lib/format';
 
-export function KpiStrip({ results }: { results: BacktestStrategyResult[] }) {
+export function KpiStrip({
+  results,
+  benchmark,
+}: {
+  results: BacktestStrategyResult[];
+  benchmark?: BenchmarkResult | null;
+}) {
   if (results.length === 0) return null;
 
   const winner = [...results].sort((a, b) => b.metrics.sharpe - a.metrics.sharpe)[0];
-  const baseline = results.find((r) => r.strategy === 'equal_weight') ?? results[0];
+  const reference = benchmark ?? null;
 
   const tiles = [
     {
-      label: 'Winning strategy',
+      label: 'Best strategy',
       value: strategyLabel(winner.strategy).label,
       sub: `Sharpe ${num(winner.metrics.sharpe, 2)}`,
       color: strategyLabel(winner.strategy).color,
@@ -21,20 +27,30 @@ export function KpiStrip({ results }: { results: BacktestStrategyResult[] }) {
     {
       label: 'Total return',
       value: pct(winner.metrics.total_return_pct, 1),
-      sub: `vs ${pct(baseline.metrics.total_return_pct, 1)} baseline`,
-      delta: winner.metrics.total_return_pct - baseline.metrics.total_return_pct,
+      sub: reference
+        ? `vs ${pct(reference.metrics.total_return_pct, 1)} ${reference.ticker}`
+        : `${winner.metrics.n_periods} days`,
+      delta: reference
+        ? winner.metrics.total_return_pct - reference.metrics.total_return_pct
+        : undefined,
     },
     {
       label: 'Max drawdown',
       value: pct(winner.metrics.max_drawdown_pct, 1),
-      sub: `vs ${pct(baseline.metrics.max_drawdown_pct, 1)} baseline`,
-      delta: -(winner.metrics.max_drawdown_pct - baseline.metrics.max_drawdown_pct),
+      sub: reference
+        ? `vs ${pct(reference.metrics.max_drawdown_pct, 1)} ${reference.ticker}`
+        : 'peak-to-trough',
+      delta: reference
+        ? -(winner.metrics.max_drawdown_pct - reference.metrics.max_drawdown_pct)
+        : undefined,
       reverse: true,
     },
     {
       label: 'Annualized vol',
       value: pct(winner.metrics.annualized_volatility_pct, 1),
-      sub: `${winner.metrics.n_periods} trading days`,
+      sub: reference
+        ? `vs ${pct(reference.metrics.annualized_volatility_pct, 1)} ${reference.ticker}`
+        : `${winner.metrics.n_periods} trading days`,
     },
   ];
 

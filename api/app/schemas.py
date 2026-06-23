@@ -46,6 +46,10 @@ class BacktestRequest(BaseModel):
     initial_capital: float = Field(default=100_000.0, gt=0)
     rebalance: str = Field(default="monthly", pattern="^(monthly|never)$")
     data_source: str = Field(default="auto")
+    benchmark: str | None = Field(
+        default=None,
+        description="Optional benchmark ticker (e.g. SPY) to overlay on the equity curve",
+    )
 
     @model_validator(mode="after")
     def _validate_dates(self) -> "BacktestRequest":
@@ -77,12 +81,20 @@ class BacktestStrategyResult(BaseModel):
     notes: str | None = None
 
 
+class BenchmarkResult(BaseModel):
+    ticker: str
+    dates: list[str]
+    equity_curve: list[float]
+    metrics: BacktestMetricsModel
+
+
 class BacktestResponse(BaseModel):
     tickers: list[str]
     start: str
     end: str
     initial_capital: float
     results: list[BacktestStrategyResult]
+    benchmark: BenchmarkResult | None = None
     compute_ms: float
 
 

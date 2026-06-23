@@ -1,8 +1,8 @@
 'use client';
 
 import { clsx } from 'clsx';
-import type { BacktestStrategyResult } from '@/lib/api';
-import { strategyLabel } from '@/lib/api';
+import type { BacktestStrategyResult, BenchmarkResult } from '@/lib/api';
+import { strategyLabel, BENCHMARK_COLOR } from '@/lib/api';
 import { num, pct } from '@/lib/format';
 
 type ColDef = {
@@ -23,10 +23,15 @@ const COLS: ColDef[] = [
   { key: 'win_rate_pct', label: 'Win %', fmt: (v) => pct(v, 1) },
 ];
 
-export function MetricsTable({ results }: { results: BacktestStrategyResult[] }) {
+export function MetricsTable({
+  results,
+  benchmark,
+}: {
+  results: BacktestStrategyResult[];
+  benchmark?: BenchmarkResult | null;
+}) {
   if (results.length === 0) return null;
 
-  // best Sharpe per column highlight
   const bestSharpe = Math.max(...results.map((r) => r.metrics.sharpe));
   const bestTotal = Math.max(...results.map((r) => r.metrics.total_return_pct));
 
@@ -35,7 +40,7 @@ export function MetricsTable({ results }: { results: BacktestStrategyResult[] })
       <div className="mb-3">
         <div className="text-sm font-semibold">Performance metrics</div>
         <div className="text-xs text-ink-dim">
-          full-period stats; higher Sharpe + lower drawdown wins
+          full-window stats · higher Sharpe + lower drawdown wins
         </div>
       </div>
       <div className="overflow-x-auto">
@@ -84,6 +89,31 @@ export function MetricsTable({ results }: { results: BacktestStrategyResult[] })
                 </tr>
               );
             })}
+            {benchmark && (
+              <tr className="border-b border-line/50 hover:bg-bg-subtle/50">
+                <td className="py-2.5 pr-3">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ background: BENCHMARK_COLOR }}
+                    />
+                    <span className="font-medium">{benchmark.ticker}</span>
+                    <span className="text-xs text-ink-dim">Benchmark</span>
+                  </div>
+                </td>
+                {COLS.map((c) => {
+                  const v = benchmark.metrics[c.key as keyof typeof benchmark.metrics] as number;
+                  return (
+                    <td
+                      key={c.key}
+                      className="py-2.5 px-2 text-right font-mono tabular-nums text-ink-muted"
+                    >
+                      {c.fmt(v)}
+                    </td>
+                  );
+                })}
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

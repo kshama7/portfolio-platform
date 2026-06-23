@@ -84,32 +84,46 @@ class MarketDataFetcher:
         return df
 
     def _from_yfinance(self, tickers: list[str], start: date, end: date) -> pd.DataFrame:
+        """Per-ticker fetch via yf.Ticker.history() — more reliable than bulk download.
+
+        yf.download() returns garbage / hits rate limits on some IP ranges;
+        Ticker.history() goes through a different endpoint and is far more stable.
+        We make N small requests serially; for typical portfolio sizes (≤30) the
+        wall-clock cost is acceptable and the result is deterministic.
+        """
         import yfinance as yf  # lazy import
 
         log.info("yf_download", tickers=tickers, start=str(start), end=str(end))
         end_inclusive = end + timedelta(days=1)
-        raw = yf.download(
-            tickers=tickers,
-            start=start.isoformat(),
-            end=end_inclusive.isoformat(),
-            auto_adjust=True,
-            progress=False,
-            threads=True,
-            group_by="ticker",
-        )
-        if raw is None or raw.empty:
-            raise MarketDataError("empty response from yfinance")
+        closes: dict[str, pd.Series] = {}
+        failures: list[str] = []
 
-        if isinstance(raw.columns, pd.MultiIndex):
-            closes = {}
-            for t in tickers:
-                if (t, "Close") in raw.columns:
-                    closes[t] = raw[(t, "Close")]
-            df = pd.DataFrame(closes)
-        else:
-            df = raw[["Close"]].rename(columns={"Close": tickers[0]})
+        for t in tickers:
+            try:
+                hist = yf.Ticker(t).history(
+                    start=start.isoformat(),
+                    end=end_inclusive.isoformat(),
+                    auto_adjust=True,
+                    raise_errors=False,
+                )
+                if hist is None or hist.empty or "Close" not in hist.columns:
+                    failures.append(t)
+                    continue
+                series = hist["Close"].copy()
+                series.index = pd.to_datetime(series.index).tz_localize(None)
+                closes[t] = series
+            except Exception as exc:
+                log.warning("yf_ticker_failed", ticker=t, error=str(exc))
+                failures.append(t)
 
-        df.index = pd.to_datetime(df.index)
+        if failures:
+            log.warning("yf_partial_failure", failed=failures)
+        if not closes:
+            raise MarketDataError(
+                f"yfinance returned no data for any of: {', '.join(tickers)}"
+            )
+
+        df = pd.DataFrame(closes)
         df = df.dropna(how="all").sort_index()
         return df
 
