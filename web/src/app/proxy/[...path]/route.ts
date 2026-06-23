@@ -3,10 +3,18 @@ import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-const API_BASE =
-  process.env.API_BASE_URL ||
-  process.env.NEXT_PUBLIC_API_BASE ||
-  'http://localhost:8000';
+function resolveBase(): string {
+  const raw =
+    process.env.API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_BASE ||
+    'http://localhost:8000';
+  // Render's fromService.hostport returns "host:port" with no scheme.
+  // Normalize so fetch() always gets a valid URL.
+  if (/^https?:\/\//i.test(raw)) return raw;
+  return `http://${raw}`;
+}
+
+const API_BASE = resolveBase();
 
 async function forward(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
   const { path } = await ctx.params;
