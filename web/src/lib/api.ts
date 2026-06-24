@@ -119,11 +119,17 @@ export const STRATEGY_LABELS: Record<string, { label: string; color: string; cat
   min_volatility: { label: 'Min Volatility', color: '#34d399', category: 'Classical' },
   hrp: { label: 'HRP', color: '#fbbf24', category: 'Classical' },
 
-  // Live DRL — real PPO/A2C policies trained on US data 2015-2022, served via ONNX
+  // Live DRL — real PPO/DDPG/A2C/SAC/TD3 policies trained on US data 2015-2022, served via ONNX
   drl_ppo_dow30: { label: 'PPO · Dow 30', color: '#a78bfa', category: 'DRL (live)' },
   drl_a2c_dow30: { label: 'A2C · Dow 30', color: '#60a5fa', category: 'DRL (live)' },
+  drl_ddpg_dow30: { label: 'DDPG · Dow 30', color: '#f87171', category: 'DRL (live)' },
+  drl_sac_dow30: { label: 'SAC · Dow 30', color: '#f472b6', category: 'DRL (live)' },
+  drl_td3_dow30: { label: 'TD3 · Dow 30', color: '#fde68a', category: 'DRL (live)' },
   drl_ppo_mag7: { label: 'PPO · MAG7', color: '#a78bfa', category: 'DRL (live)' },
   drl_a2c_mag7: { label: 'A2C · MAG7', color: '#60a5fa', category: 'DRL (live)' },
+  drl_ddpg_mag7: { label: 'DDPG · MAG7', color: '#f87171', category: 'DRL (live)' },
+  drl_sac_mag7: { label: 'SAC · MAG7', color: '#f472b6', category: 'DRL (live)' },
+  drl_td3_mag7: { label: 'TD3 · MAG7', color: '#fde68a', category: 'DRL (live)' },
 
   // Legacy NIFTY replay (precomputed action CSVs)
   drl_ppo_nifty: { label: 'PPO · NIFTY-20', color: '#a78bfa', category: 'DRL (replay)' },

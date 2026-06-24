@@ -27,7 +27,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import gymnasium as gym
 from gymnasium import spaces
-from stable_baselines3 import A2C, PPO
+import numpy as np
+from stable_baselines3 import A2C, DDPG, PPO, SAC, TD3
+from stable_baselines3.common.noise import NormalActionNoise
 from stable_baselines3.common.vec_env import DummyVecEnv
 
 from app.data.universe import UNIVERSES
@@ -111,7 +113,9 @@ def fetch_returns(tickers: list[str], start: date, end: date) -> tuple[pd.DataFr
 def export_policy_to_onnx(model, n_obs: int, out_path: Path) -> None:
     """Export the deterministic action of an SB3 policy to ONNX."""
 
-    class PolicyWrapper(torch.nn.Module):
+    class OnPolicyWrapper(torch.nn.Module):
+        """Wraps PPO/A2C policies: forward returns (actions, values, log_probs)."""
+
         def __init__(self, inner):
             super().__init__()
             self.inner = inner
@@ -120,9 +124,35 @@ def export_policy_to_onnx(model, n_obs: int, out_path: Path) -> None:
             actions, _, _ = self.inner(obs, deterministic=True)
             return actions
 
+    class OffPolicyActorWrapper(torch.nn.Module):
+        """Wraps DDPG/TD3 actor: forward returns deterministic action."""
+
+        def __init__(self, inner):
+            super().__init__()
+            self.inner = inner
+
+        def forward(self, obs):
+            return self.inner(obs)
+
+    class SACActorWrapper(torch.nn.Module):
+        """Wraps SAC actor: take the mean action (no sampling)."""
+
+        def __init__(self, actor):
+            super().__init__()
+            self.actor = actor
+
+        def forward(self, obs):
+            return self.actor(obs, deterministic=True)
+
     policy = model.policy
     policy.eval()
-    wrapper = PolicyWrapper(policy)
+    # Pick the right wrapper based on policy type
+    if hasattr(policy, "actor") and hasattr(policy.actor, "mu"):  # DDPG / TD3
+        wrapper = OffPolicyActorWrapper(policy.actor)
+    elif hasattr(policy, "actor"):  # SAC
+        wrapper = SACActorWrapper(policy.actor)
+    else:  # PPO / A2C
+        wrapper = OnPolicyWrapper(policy)
 
     dummy = torch.zeros(1, n_obs, dtype=torch.float32)
     torch.onnx.export(
@@ -139,7 +169,7 @@ def export_policy_to_onnx(model, n_obs: int, out_path: Path) -> None:
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--universe", default="DOW30", choices=list(UNIVERSES.keys()))
-    p.add_argument("--algo", default="ppo", choices=["ppo", "a2c"])
+    p.add_argument("--algo", default="ppo", choices=["ppo", "a2c", "ddpg", "sac", "td3"])
     p.add_argument("--timesteps", type=int, default=30000)
     p.add_argument("--start", default=TRAIN_START.isoformat())
     p.add_argument("--end", default=TRAIN_END.isoformat())
@@ -159,10 +189,30 @@ def main() -> int:
     n_obs = len(actual_tickers) * LOOKBACK
 
     print(f"[train] training {args.algo.upper()} for {args.timesteps} timesteps…")
+    n_actions = len(actual_tickers)
     if args.algo == "ppo":
         model = PPO("MlpPolicy", env, verbose=0, n_steps=256, batch_size=64, learning_rate=3e-4)
-    else:
+    elif args.algo == "a2c":
         model = A2C("MlpPolicy", env, verbose=0, learning_rate=7e-4)
+    elif args.algo == "ddpg":
+        noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
+        model = DDPG(
+            "MlpPolicy", env, verbose=0, learning_rate=1e-3,
+            buffer_size=50_000, batch_size=128, action_noise=noise,
+        )
+    elif args.algo == "sac":
+        model = SAC(
+            "MlpPolicy", env, verbose=0, learning_rate=3e-4,
+            buffer_size=50_000, batch_size=64, learning_starts=100, ent_coef="auto_0.1",
+        )
+    elif args.algo == "td3":
+        noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
+        model = TD3(
+            "MlpPolicy", env, verbose=0, learning_rate=1e-3,
+            buffer_size=50_000, batch_size=100, action_noise=noise,
+        )
+    else:
+        raise ValueError(f"unknown algo {args.algo}")
 
     model.learn(total_timesteps=args.timesteps, progress_bar=False)
     print("[train] done")

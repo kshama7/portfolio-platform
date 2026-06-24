@@ -24,12 +24,21 @@ DRL_REPLAY_REGISTRY: dict[str, str] = {
 }
 
 # Real-time DRL inference via ONNX (trained on US data 2015-2022)
-# Maps user-facing strategy id → ONNX model file stem
+# All five SB3 algorithms exported as ONNX:
+#   - PPO, A2C: on-policy MlpPolicy
+#   - DDPG, TD3: deterministic actor (MuActor)
+#   - SAC: stochastic actor, deterministic mean used at inference
 DRL_LIVE_REGISTRY: dict[str, str] = {
     "drl_ppo_dow30": "ppo_dow30",
     "drl_a2c_dow30": "a2c_dow30",
+    "drl_ddpg_dow30": "ddpg_dow30",
+    "drl_sac_dow30": "sac_dow30",
+    "drl_td3_dow30": "td3_dow30",
     "drl_ppo_mag7": "ppo_mag7",
     "drl_a2c_mag7": "a2c_mag7",
+    "drl_ddpg_mag7": "ddpg_mag7",
+    "drl_sac_mag7": "sac_mag7",
+    "drl_td3_mag7": "td3_mag7",
 }
 
 
@@ -51,8 +60,14 @@ ALL_STRATEGIES: list[str] = (
 DRL_STRATEGY_UNIVERSE: dict[str, str] = {
     "drl_ppo_dow30": "DOW30",
     "drl_a2c_dow30": "DOW30",
+    "drl_ddpg_dow30": "DOW30",
+    "drl_sac_dow30": "DOW30",
+    "drl_td3_dow30": "DOW30",
     "drl_ppo_mag7": "MAG7",
     "drl_a2c_mag7": "MAG7",
+    "drl_ddpg_mag7": "MAG7",
+    "drl_sac_mag7": "MAG7",
+    "drl_td3_mag7": "MAG7",
     "drl_ppo_nifty": "DRL_NIFTY20",
     "drl_ddpg_nifty": "DRL_NIFTY20",
     "drl_a2c_nifty": "DRL_NIFTY20",
