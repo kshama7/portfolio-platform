@@ -32,6 +32,18 @@ I trained five deep reinforcement-learning agents to allocate a portfolio across
 
 ---
 
+## The dashboard
+
+Pick a universe, choose classical and deep-RL strategies, and run a live backtest against a benchmark — equity curve, drawdown, full risk metrics, and a dollar-by-dollar allocation card.
+
+![Dashboard — universe picker, summary KPIs, and equity curve vs SPY](docs/screenshots/dashboard.png)
+
+![Drawdown, Max-Sharpe allocation breakdown, and per-strategy performance metrics](docs/screenshots/metrics.png)
+
+[**▶ Try it live →**](https://portfolio-web-iu0h.onrender.com)
+
+---
+
 ## Why this project exists
 
 My undergraduate capstone was deep RL for portfolio optimization — but it lived in Jupyter notebooks.
