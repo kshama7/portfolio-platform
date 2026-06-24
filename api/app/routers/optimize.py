@@ -7,8 +7,13 @@ from fastapi import APIRouter, HTTPException
 from app.core.logging import get_logger
 from app.core.metrics import optimize_duration_seconds, optimize_runs_total
 from app.data.fetcher import MarketDataError, get_fetcher
-from app.optimizers import CLASSICAL_REGISTRY, DRL_REGISTRY
-from app.optimizers.drl import DRLReplayOptimizer
+from app.optimizers import (
+    AVAILABLE_LIVE_DRL,
+    CLASSICAL_REGISTRY,
+    DRL_REPLAY_REGISTRY,
+    DRLReplayOptimizer,
+    LiveDRLOptimizer,
+)
 from app.schemas import OptimizeRequest, OptimizeResponse, OptimizeStrategyResult
 
 router = APIRouter(prefix="/api/v1", tags=["optimize"])
@@ -78,6 +83,10 @@ async def optimize(req: OptimizeRequest) -> OptimizeResponse:
 def _build_optimizer(strategy: str):
     if strategy in CLASSICAL_REGISTRY:
         return CLASSICAL_REGISTRY[strategy]()
-    if strategy in DRL_REGISTRY:
-        return DRLReplayOptimizer(strategy=strategy, filename=DRL_REGISTRY[strategy])
+    if strategy in AVAILABLE_LIVE_DRL:
+        return LiveDRLOptimizer(strategy=strategy, model_id=AVAILABLE_LIVE_DRL[strategy])
+    if strategy in DRL_REPLAY_REGISTRY:
+        return DRLReplayOptimizer(
+            strategy=strategy, filename=DRL_REPLAY_REGISTRY[strategy]
+        )
     raise HTTPException(status_code=400, detail=f"unknown strategy: {strategy}")

@@ -1,41 +1,36 @@
 'use client';
 
 import { clsx } from 'clsx';
-import { Info } from 'lucide-react';
-import { useState } from 'react';
+import { Cpu } from 'lucide-react';
 import { STRATEGY_LABELS } from '@/lib/api';
 
 const CLASSICAL = ['equal_weight', 'max_sharpe', 'min_volatility', 'hrp'];
-const DRL = ['drl_ppo', 'drl_ddpg', 'drl_a2c', 'drl_sac', 'drl_td3'];
 
 export function StrategyPicker({
   selected,
   onChange,
-  isNiftyUniverse,
+  availableDrl,
+  universeName,
 }: {
   selected: string[];
   onChange: (next: string[]) => void;
-  isNiftyUniverse: boolean;
+  availableDrl: string[];
+  universeName: string;
 }) {
-  const [showDrl, setShowDrl] = useState(isNiftyUniverse);
-
   const toggle = (s: string) => {
     onChange(selected.includes(s) ? selected.filter((x) => x !== s) : [...selected, s]);
   };
 
-  const renderBtn = (s: string, disabled = false) => {
-    const meta = STRATEGY_LABELS[s];
+  const renderBtn = (s: string) => {
+    const meta = STRATEGY_LABELS[s] ?? { label: s, color: '#9ca3af', category: 'Other' };
     const on = selected.includes(s);
     return (
       <button
         key={s}
-        onClick={() => !disabled && toggle(s)}
-        disabled={disabled}
-        title={disabled ? 'DRL agents only work on the NIFTY-20 universe they were trained on' : ''}
+        onClick={() => toggle(s)}
         className={clsx(
           'px-2.5 py-1.5 rounded text-xs font-medium transition-all flex items-center gap-2 text-left',
-          disabled && 'opacity-40 cursor-not-allowed',
-          !disabled && on
+          on
             ? 'bg-bg-subtle border border-accent/40 text-ink'
             : 'border border-line text-ink-muted hover:text-ink hover:bg-bg-subtle',
         )}
@@ -50,39 +45,27 @@ export function StrategyPicker({
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-xs font-medium text-ink-muted uppercase tracking-wider">
-          Strategies
+    <div className="space-y-3">
+      <div>
+        <div className="text-xs font-medium text-ink-muted uppercase tracking-wider mb-2">
+          Classical
         </div>
-      </div>
-      <div className="grid grid-cols-2 gap-1.5">
-        {CLASSICAL.map((s) => renderBtn(s))}
+        <div className="grid grid-cols-2 gap-1.5">{CLASSICAL.map(renderBtn)}</div>
       </div>
 
-      <div className="mt-3">
-        <button
-          onClick={() => setShowDrl((v) => !v)}
-          className="flex items-center gap-1 text-[11px] text-ink-dim hover:text-ink-muted"
-        >
-          <Info className="w-3 h-3" />
-          {showDrl ? 'Hide' : 'Show'} DRL strategies (research)
-        </button>
-        {showDrl && (
-          <>
-            <div className="grid grid-cols-2 gap-1.5 mt-2">
-              {DRL.map((s) => renderBtn(s, !isNiftyUniverse))}
-            </div>
-            {!isNiftyUniverse && (
-              <div className="text-[10px] text-ink-dim mt-1.5 leading-relaxed">
-                Disabled — DRL agents (PPO/DDPG/A2C/SAC/TD3) were trained offline
-                on a 20-stock NIFTY-50 subset. Switch the universe to DRL_NIFTY20
-                to use them.
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      {availableDrl.length > 0 && (
+        <div>
+          <div className="text-xs font-medium text-ink-muted uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <Cpu className="w-3 h-3" />
+            Deep RL — trained for {universeName}
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">{availableDrl.map(renderBtn)}</div>
+          <div className="text-[10px] text-ink-dim mt-1.5 leading-relaxed">
+            Real policies. Trained 2015–2022 on the {universeName} universe. Daily
+            re-inference at backtest time via ONNX runtime.
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -36,7 +36,8 @@ def test_backtest_multi_strategy(client):
     assert {r_["strategy"] for r_ in results} == {"equal_weight", "max_sharpe", "hrp"}
 
 
-def test_backtest_drl_replay(client):
+def test_backtest_drl_replay_nifty(client):
+    """Legacy NIFTY-20 precomputed action replay backtest."""
     drl_tickers = [
         "ASIANPAINT.NS", "CIPLA.NS", "DRREDDY.NS", "GAIL.NS", "GRASIM.NS",
         "HDFCBANK.NS", "HEROMOTOCO.NS", "HINDUNILVR.NS", "INFY.NS", "ITC.NS",
@@ -49,11 +50,11 @@ def test_backtest_drl_replay(client):
             "tickers": drl_tickers,
             "start": "2021-03-01",
             "end": "2023-12-31",
-            "strategies": ["drl_ppo"],
+            "strategies": ["drl_ppo_nifty"],
             "data_source": "local",
         },
     )
     assert r.status_code == 200, r.text
     res = r.json()["results"][0]
-    assert res["strategy"] == "drl_ppo"
+    assert res["strategy"] == "drl_ppo_nifty"
     assert len(res["equity_curve"]) > 100

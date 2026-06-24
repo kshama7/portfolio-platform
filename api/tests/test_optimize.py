@@ -39,7 +39,8 @@ def test_optimize_max_sharpe(client):
         assert abs(sum(r_["weights"].values()) - 1.0) < 1e-3
 
 
-def test_optimize_drl_ppo(client):
+def test_optimize_drl_ppo_nifty_replay(client):
+    """Legacy NIFTY-20 DRL replay (precomputed action CSV)."""
     r = client.post(
         "/api/v1/optimize",
         json={
@@ -51,13 +52,13 @@ def test_optimize_drl_ppo(client):
             ],
             "start": "2021-03-01",
             "end": "2023-12-31",
-            "strategies": ["drl_ppo"],
+            "strategies": ["drl_ppo_nifty"],
             "data_source": "local",
         },
     )
     assert r.status_code == 200, r.text
     result = r.json()["results"][0]
-    assert result["strategy"] == "drl_ppo"
+    assert result["strategy"] == "drl_ppo_nifty"
     assert len(result["weights"]) > 0
 
 

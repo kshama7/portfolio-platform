@@ -2,15 +2,19 @@ from __future__ import annotations
 
 import time
 
-import numpy as np
 from fastapi import APIRouter, HTTPException
 
 from app.backtest.engine import _compute_metrics, run_backtest
 from app.core.logging import get_logger
 from app.core.metrics import backtest_duration_seconds
 from app.data.fetcher import MarketDataError, get_fetcher
-from app.optimizers import CLASSICAL_REGISTRY, DRL_REGISTRY
-from app.optimizers.drl import DRLReplayOptimizer
+from app.optimizers import (
+    AVAILABLE_LIVE_DRL,
+    CLASSICAL_REGISTRY,
+    DRL_REPLAY_REGISTRY,
+    DRLReplayOptimizer,
+    LiveDRLOptimizer,
+)
 from app.schemas import (
     BacktestMetricsModel,
     BacktestRequest,
@@ -53,8 +57,28 @@ async def backtest(req: BacktestRequest) -> BacktestResponse:
                     rebalance=req.rebalance,
                 )
                 results.append(_to_response(bt, weights=fit.weights, notes=fit.notes))
-            elif strategy in DRL_REGISTRY:
-                drl = DRLReplayOptimizer(strategy=strategy, filename=DRL_REGISTRY[strategy])
+            elif strategy in AVAILABLE_LIVE_DRL:
+                drl = LiveDRLOptimizer(strategy=strategy, model_id=AVAILABLE_LIVE_DRL[strategy])
+                weights_df = drl.action_sequence(prices)
+                bt = run_backtest(
+                    prices=prices,
+                    weights=weights_df,
+                    strategy=strategy,
+                    initial_capital=req.initial_capital,
+                    rebalance=req.rebalance,
+                )
+                final_w = {c: float(weights_df.iloc[-1][c]) for c in weights_df.columns}
+                results.append(
+                    _to_response(
+                        bt,
+                        weights=final_w,
+                        notes="Real-time ONNX DRL inference (trained on US data 2015-2022).",
+                    )
+                )
+            elif strategy in DRL_REPLAY_REGISTRY:
+                drl = DRLReplayOptimizer(
+                    strategy=strategy, filename=DRL_REPLAY_REGISTRY[strategy]
+                )
                 weights_df = drl.action_sequence()
                 bt = run_backtest(
                     prices=prices,
@@ -68,7 +92,7 @@ async def backtest(req: BacktestRequest) -> BacktestResponse:
                     _to_response(
                         bt,
                         weights=final_w,
-                        notes="DRL replay using recorded daily weight trajectory.",
+                        notes="DRL replay using recorded NIFTY-20 weight trajectory.",
                     )
                 )
             else:
@@ -87,7 +111,6 @@ async def backtest(req: BacktestRequest) -> BacktestResponse:
                 time.perf_counter() - per_start
             )
 
-    # Optional benchmark — buy-and-hold the benchmark ticker over the same window
     benchmark_result: BenchmarkResult | None = None
     if req.benchmark:
         benchmark_result = await _build_benchmark(
@@ -111,7 +134,6 @@ async def backtest(req: BacktestRequest) -> BacktestResponse:
 async def _build_benchmark(
     ticker: str, start, end, initial_capital: float
 ) -> BenchmarkResult | None:
-    """Fetch the benchmark ticker's price series and compute a buy-and-hold equity curve."""
     fetcher = get_fetcher()
     try:
         bench_df = await fetcher.get_close_prices(

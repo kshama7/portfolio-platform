@@ -99,6 +99,7 @@ async function jsonFetch<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   universes: () => jsonFetch<Universe[]>('/api/v1/universes'),
   strategies: () => jsonFetch<string[]>('/api/v1/strategies'),
+  strategyUniverseMap: () => jsonFetch<Record<string, string>>('/api/v1/strategies/universe-map'),
   benchmarks: () => jsonFetch<Record<string, string>>('/api/v1/benchmarks'),
   optimize: (req: OptimizeRequest) =>
     jsonFetch<OptimizeResponse>('/api/v1/optimize', {
@@ -117,11 +118,19 @@ export const STRATEGY_LABELS: Record<string, { label: string; color: string; cat
   max_sharpe: { label: 'Max Sharpe', color: '#22d3ee', category: 'Classical' },
   min_volatility: { label: 'Min Volatility', color: '#34d399', category: 'Classical' },
   hrp: { label: 'HRP', color: '#fbbf24', category: 'Classical' },
-  drl_ppo: { label: 'PPO (DRL)', color: '#a78bfa', category: 'Deep RL' },
-  drl_ddpg: { label: 'DDPG (DRL)', color: '#f87171', category: 'Deep RL' },
-  drl_a2c: { label: 'A2C (DRL)', color: '#60a5fa', category: 'Deep RL' },
-  drl_sac: { label: 'SAC (DRL)', color: '#f472b6', category: 'Deep RL' },
-  drl_td3: { label: 'TD3 (DRL)', color: '#fde68a', category: 'Deep RL' },
+
+  // Live DRL — real PPO/A2C policies trained on US data 2015-2022, served via ONNX
+  drl_ppo_dow30: { label: 'PPO · Dow 30', color: '#a78bfa', category: 'DRL (live)' },
+  drl_a2c_dow30: { label: 'A2C · Dow 30', color: '#60a5fa', category: 'DRL (live)' },
+  drl_ppo_mag7: { label: 'PPO · MAG7', color: '#a78bfa', category: 'DRL (live)' },
+  drl_a2c_mag7: { label: 'A2C · MAG7', color: '#60a5fa', category: 'DRL (live)' },
+
+  // Legacy NIFTY replay (precomputed action CSVs)
+  drl_ppo_nifty: { label: 'PPO · NIFTY-20', color: '#a78bfa', category: 'DRL (replay)' },
+  drl_ddpg_nifty: { label: 'DDPG · NIFTY-20', color: '#f87171', category: 'DRL (replay)' },
+  drl_a2c_nifty: { label: 'A2C · NIFTY-20', color: '#60a5fa', category: 'DRL (replay)' },
+  drl_sac_nifty: { label: 'SAC · NIFTY-20', color: '#f472b6', category: 'DRL (replay)' },
+  drl_td3_nifty: { label: 'TD3 · NIFTY-20', color: '#fde68a', category: 'DRL (replay)' },
 };
 
 export function strategyLabel(s: string) {

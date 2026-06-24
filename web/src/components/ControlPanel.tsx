@@ -1,7 +1,7 @@
 'use client';
 
 import { Loader2, Play } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { TickerPicker } from './TickerPicker';
 import { StrategyPicker } from './StrategyPicker';
@@ -30,15 +30,15 @@ export function ControlPanel({
 }) {
   const [universes, setUniverses] = useState<Universe[]>([]);
   const [benchmarks, setBenchmarks] = useState<Record<string, string>>({});
+  const [drlMap, setDrlMap] = useState<Record<string, string>>({});
   const [universeName, setUniverseName] = useState(DEFAULT_UNIVERSE_NAME);
   const [tickers, setTickers] = useState<string[]>(DEFAULT_TICKERS);
   const [strategies, setStrategies] = useState<string[]>([
     'equal_weight',
     'max_sharpe',
-    'min_volatility',
     'hrp',
   ]);
-  const initial = presetRange(3);
+  const initial = presetRange(2);
   const [start, setStart] = useState(initial.start);
   const [end, setEnd] = useState(initial.end);
   const [capital, setCapital] = useState(100000);
@@ -47,16 +47,42 @@ export function ControlPanel({
   useEffect(() => {
     api.universes().then(setUniverses).catch(console.error);
     api.benchmarks().then(setBenchmarks).catch(console.error);
+    api.strategyUniverseMap().then(setDrlMap).catch(console.error);
   }, []);
 
   const activeUniverse = universes.find((u) => u.name === universeName)?.tickers ?? [];
   const isNifty = universeName === 'NIFTY50' || universeName === 'DRL_NIFTY20';
 
+  // DRL strategies available for the currently selected universe
+  const availableDrl = useMemo(
+    () => Object.entries(drlMap).filter(([, u]) => u === universeName).map(([s]) => s),
+    [drlMap, universeName],
+  );
+
+  // Auto-pre-select the first available DRL strategy when the universe changes
+  useEffect(() => {
+    if (availableDrl.length === 0) {
+      // Remove DRL strategies from selection if we switch to a universe without one
+      setStrategies((cur) => cur.filter((s) => !s.startsWith('drl_')));
+    } else {
+      // Add the first DRL strategy if none selected
+      setStrategies((cur) => {
+        const hasDrl = cur.some((s) => s.startsWith('drl_'));
+        if (hasDrl) {
+          // Keep only ones available for this universe
+          const valid = cur.filter((s) => !s.startsWith('drl_') || availableDrl.includes(s));
+          if (valid.some((s) => s.startsWith('drl_'))) return valid;
+          return [...valid, availableDrl[0]];
+        }
+        return [...cur, availableDrl[0]];
+      });
+    }
+  }, [availableDrl]);
+
   const onUniverseChange = (name: string) => {
     setUniverseName(name);
     const next = universes.find((u) => u.name === name)?.tickers ?? [];
-    setTickers(next.slice(0, 20));
-    // If switching to NIFTY, default benchmark off (no NIFTY benchmark wired)
+    setTickers(next.slice(0, 30));
     if (name === 'NIFTY50' || name === 'DRL_NIFTY20') {
       setBenchmark('');
     } else if (!benchmark) {
@@ -169,7 +195,12 @@ export function ControlPanel({
         )}
       </div>
 
-      <StrategyPicker selected={strategies} onChange={setStrategies} isNiftyUniverse={isNifty} />
+      <StrategyPicker
+        selected={strategies}
+        onChange={setStrategies}
+        availableDrl={availableDrl}
+        universeName={universeName}
+      />
 
       <button
         className="btn btn-primary w-full flex items-center justify-center gap-2"

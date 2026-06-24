@@ -21,4 +21,7 @@ def test_list_strategies(client):
     assert r.status_code == 200
     body = r.json()
     assert "max_sharpe" in body
-    assert "drl_ppo" in body
+    # Live DRL trained on US data (PPO on Dow 30)
+    assert "drl_ppo_dow30" in body
+    # Legacy NIFTY replay
+    assert "drl_ppo_nifty" in body
