@@ -109,38 +109,52 @@ class LiveDRLOptimizer:
         trained_tickers: list[str] = list(meta["tickers"])
         lookback: int = int(meta["lookback"])
 
-        usable = [t for t in trained_tickers if t in prices.columns]
-        if len(usable) != len(trained_tickers):
-            missing = sorted(set(trained_tickers) - set(usable))
+        present = [t for t in trained_tickers if t in prices.columns]
+        if not present:
             raise ValueError(
-                f"DRL agent {self.model_id} was trained on {len(trained_tickers)} "
-                f"tickers; missing from input: {missing[:5]}"
-                + ("…" if len(missing) > 5 else "")
+                f"DRL agent {self.model_id} expects {trained_tickers[:3]}…; "
+                f"none of its tickers are in the input."
             )
 
-        # Align to the agent's expected ticker order
-        ordered = prices[trained_tickers].dropna()
-        returns = ordered.pct_change().fillna(0.0).clip(-1.0, 1.0)
+        # The ONNX policy expects a fixed observation width (n_trained × lookback),
+        # so we always feed all trained tickers in their original order. Any ticker
+        # the live feed didn't return is back-filled with 0 returns (a neutral
+        # signal) so the observation keeps the right shape. We only emit weights
+        # for tickers that are actually present, renormalized to sum to 1.
+        aligned = prices.reindex(columns=trained_tickers)
+        # forward/back-fill prices per column, then compute returns
+        returns = aligned.pct_change().fillna(0.0).clip(-1.0, 1.0)
+        # drop the leading all-NaN row left by pct_change on fully-missing columns
+        returns = returns.fillna(0.0)
+        # use the index from the densest column set (rows where ≥1 price existed)
+        valid_rows = aligned.dropna(how="all").index
+        returns = returns.loc[valid_rows]
 
         ret_arr = returns.values.astype(np.float32)
         n_days, n_assets = ret_arr.shape
 
         if n_days < lookback + 1:
-            raise ValueError(
-                f"need at least {lookback + 1} days, got {n_days}"
-            )
+            raise ValueError(f"need at least {lookback + 1} days, got {n_days}")
 
         input_name = sess.get_inputs()[0].name
         weights_per_day = np.zeros_like(ret_arr)
         uniform = np.full(n_assets, 1.0 / n_assets, dtype=np.float32)
         weights_per_day[:lookback] = uniform
 
+        present_mask = np.array(
+            [1.0 if t in present else 0.0 for t in trained_tickers], dtype=np.float32
+        )
+
         for t in range(lookback, n_days):
             obs = ret_arr[t - lookback : t].reshape(1, -1)
             action = sess.run(None, {input_name: obs})[0][0]
-            weights_per_day[t] = _softmax(action.astype(np.float32))
+            w = _softmax(action.astype(np.float32))
+            # zero out absent tickers, renormalize over what we actually hold
+            w = w * present_mask
+            total = w.sum()
+            weights_per_day[t] = (w / total) if total > 0 else (present_mask / present_mask.sum())
 
-        return pd.DataFrame(weights_per_day, index=ordered.index, columns=trained_tickers)
+        return pd.DataFrame(weights_per_day, index=returns.index, columns=trained_tickers)
 
     def action_sequence(self, prices: pd.DataFrame) -> pd.DataFrame:
         return self._build_sequence(prices)
