@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 620" font-family="Inter, system-ui, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 660" font-family="Inter, system-ui, sans-serif">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#0a0a0b"/>
@@ -11,120 +11,132 @@
       .lbl { fill: #f3f4f6; font-size: 12px; font-weight: 600; }
       .sub { fill: #9ca3af; font-size: 10px; }
       .grp { fill: none; stroke: #1f1f25; stroke-width: 1; rx: 8; ry: 8; }
+      .grp-live { fill: none; stroke: #22d3ee; stroke-width: 1.4; stroke-opacity: 0.5; rx: 8; ry: 8; }
+      .grp-ref { fill: none; stroke: #6b7280; stroke-width: 1; stroke-dasharray: 5 4; rx: 8; ry: 8; }
       .grp-title { fill: #6b7280; font-size: 10px; letter-spacing: 0.08em; }
+      .grp-title-live { fill: #22d3ee; font-size: 10px; letter-spacing: 0.08em; font-weight: 600; }
       .node { fill: #16161a; stroke: #1f1f25; rx: 6; ry: 6; }
       .node-accent { fill: #16161a; stroke: #22d3ee; stroke-width: 1.5; rx: 6; ry: 6; }
+      .node-ref { fill: #121214; stroke: #2a2a30; stroke-dasharray: 4 3; rx: 6; ry: 6; }
       .edge { stroke: #6b7280; stroke-width: 1.2; fill: none; }
       .edge-data { stroke: #22d3ee; stroke-width: 1.2; fill: none; stroke-dasharray: 3 2; }
+      .badge-live { fill: #0f2d33; stroke: #22d3ee; stroke-opacity: 0.6; rx: 4; ry: 4; }
+      .badge-ref { fill: #1a1a1f; stroke: #3a3a42; rx: 4; ry: 4; }
     </style>
   </defs>
-  <rect width="980" height="620" fill="url(#bg)"/>
+  <rect width="980" height="660" fill="url(#bg)"/>
 
-  <!-- user / cloudflare -->
-  <rect x="40" y="40" width="160" height="64" class="node"/>
-  <text x="120" y="65" text-anchor="middle" class="lbl">User</text>
-  <text x="120" y="82" text-anchor="middle" class="sub">browser · k6 · curl</text>
-  <text x="120" y="95" text-anchor="middle" class="sub">portfolio.kshama.dev</text>
+  <text x="32" y="34" class="lbl" font-size="15">Portfolio Platform — architecture</text>
+  <rect x="640" y="22" width="150" height="18" class="badge-live"/>
+  <text x="654" y="35" class="sub" fill="#22d3ee">● LIVE on Render</text>
+  <rect x="800" y="22" width="150" height="18" class="badge-ref"/>
+  <text x="812" y="35" class="sub">▢ reference (not deployed)</text>
 
-  <rect x="240" y="40" width="160" height="64" class="node"/>
-  <text x="320" y="65" text-anchor="middle" class="lbl">Cloudflare</text>
-  <text x="320" y="82" text-anchor="middle" class="sub">DNS · TLS · WAF</text>
-  <text x="320" y="95" text-anchor="middle" class="sub">terraformed</text>
+  <!-- user -->
+  <rect x="32" y="70" width="150" height="66" class="node"/>
+  <text x="107" y="96" text-anchor="middle" class="lbl">User</text>
+  <text x="107" y="113" text-anchor="middle" class="sub">browser · curl · k6</text>
+  <text x="107" y="127" text-anchor="middle" class="sub">picks tickers, runs backtest</text>
 
-  <line x1="200" y1="72" x2="240" y2="72" class="edge" marker-end="url(#arr)"/>
-  <line x1="400" y1="72" x2="440" y2="72" class="edge" marker-end="url(#arr)"/>
+  <!-- ───────── LIVE: Render ───────── -->
+  <rect x="210" y="56" width="520" height="250" class="grp-live"/>
+  <text x="228" y="74" class="grp-title-live">● LIVE DEPLOYMENT — RENDER (free tier, render.yaml blueprint)</text>
 
-  <!-- fly platform group -->
-  <rect x="430" y="20" width="510" height="320" class="grp"/>
-  <text x="450" y="40" class="grp-title">FLY.IO — IAD REGION</text>
+  <rect x="228" y="86" width="220" height="86" class="node-accent"/>
+  <text x="338" y="110" text-anchor="middle" class="lbl">Web · Next.js 15</text>
+  <text x="338" y="126" text-anchor="middle" class="sub">dashboard · Tailwind · Recharts</text>
+  <text x="338" y="140" text-anchor="middle" class="sub">runtime proxy route handler</text>
+  <text x="338" y="154" text-anchor="middle" class="sub">portfolio-web-*.onrender.com</text>
 
-  <rect x="450" y="56" width="200" height="72" class="node-accent"/>
-  <text x="550" y="78" text-anchor="middle" class="lbl">Web (Next.js)</text>
-  <text x="550" y="94" text-anchor="middle" class="sub">SSR · standalone build</text>
-  <text x="550" y="108" text-anchor="middle" class="sub">2 machines · auto-scale 6</text>
-  <text x="550" y="120" text-anchor="middle" class="sub">256 MB RAM each</text>
+  <rect x="488" y="86" width="222" height="86" class="node-accent"/>
+  <text x="599" y="110" text-anchor="middle" class="lbl">API · FastAPI</text>
+  <text x="599" y="126" text-anchor="middle" class="sub">classical + DRL optimizers</text>
+  <text x="599" y="140" text-anchor="middle" class="sub">/healthz · /metrics</text>
+  <text x="599" y="154" text-anchor="middle" class="sub">portfolio-api-*.onrender.com</text>
 
-  <rect x="700" y="56" width="220" height="72" class="node-accent"/>
-  <text x="810" y="78" text-anchor="middle" class="lbl">API (FastAPI)</text>
-  <text x="810" y="94" text-anchor="middle" class="sub">Markowitz · HRP · 5× DRL</text>
-  <text x="810" y="108" text-anchor="middle" class="sub">2 machines · auto-scale 10</text>
-  <text x="810" y="120" text-anchor="middle" class="sub">512 MB · /metrics · /healthz</text>
+  <line x1="182" y1="103" x2="228" y2="120" class="edge" marker-end="url(#arr)"/>
+  <line x1="448" y1="129" x2="488" y2="129" class="edge" marker-end="url(#arr)"/>
+  <text x="468" y="122" text-anchor="middle" class="sub">/proxy</text>
 
-  <line x1="650" y1="92" x2="700" y2="92" class="edge" marker-end="url(#arr)"/>
-
-  <!-- internals of API -->
-  <rect x="700" y="144" width="220" height="180" class="grp"/>
-  <text x="715" y="162" class="grp-title">INSIDE THE API</text>
-
-  <rect x="715" y="172" width="190" height="36" class="node"/>
-  <text x="810" y="194" text-anchor="middle" class="sub">Classical optimizers (pypfopt)</text>
-
-  <rect x="715" y="216" width="190" height="36" class="node"/>
-  <text x="810" y="238" text-anchor="middle" class="sub">DRL replay (PPO·DDPG·A2C·SAC·TD3)</text>
-
-  <rect x="715" y="260" width="190" height="36" class="node"/>
-  <text x="810" y="282" text-anchor="middle" class="sub">Backtest engine (Sharpe · DD · Sortino)</text>
-
-  <rect x="715" y="304" width="190" height="14" class="node" fill="#1f1f25"/>
-  <text x="810" y="314" text-anchor="middle" class="sub">middleware → Prom metrics</text>
+  <!-- inside the API -->
+  <rect x="488" y="184" width="222" height="110" class="grp"/>
+  <text x="502" y="200" class="grp-title">INSIDE THE API</text>
+  <rect x="502" y="208" width="194" height="22" class="node"/>
+  <text x="599" y="223" text-anchor="middle" class="sub">Classical: Markowitz · Min-Vol · HRP</text>
+  <rect x="502" y="236" width="194" height="22" class="node-accent"/>
+  <text x="599" y="251" text-anchor="middle" class="sub">DRL: PPO·A2C·DDPG·SAC·TD3 → ONNX</text>
+  <rect x="502" y="264" width="194" height="22" class="node"/>
+  <text x="599" y="279" text-anchor="middle" class="sub">Backtest: Sharpe·Sortino·DD·Calmar</text>
 
   <!-- data source -->
-  <rect x="450" y="160" width="200" height="44" class="node"/>
-  <text x="550" y="180" text-anchor="middle" class="sub">Yahoo Finance (live)</text>
-  <text x="550" y="195" text-anchor="middle" class="sub">+ bundled NIFTY50 CSV</text>
-  <line x1="650" y1="182" x2="700" y2="216" class="edge-data" marker-end="url(#arr)"/>
+  <rect x="228" y="200" width="220" height="50" class="node"/>
+  <text x="338" y="220" text-anchor="middle" class="sub">Yahoo Finance (live US prices)</text>
+  <text x="338" y="235" text-anchor="middle" class="sub">+ bundled NIFTY-50 CSV fallback</text>
+  <line x1="448" y1="225" x2="488" y2="236" class="edge-data" marker-end="url(#arr)"/>
 
-  <!-- observability -->
-  <rect x="40" y="360" width="900" height="180" class="grp"/>
-  <text x="60" y="378" class="grp-title">OBSERVABILITY · SRE</text>
+  <!-- offline training (feeds the ONNX models) -->
+  <rect x="754" y="86" width="194" height="120" class="node"/>
+  <text x="851" y="108" text-anchor="middle" class="lbl">Offline training</text>
+  <text x="851" y="125" text-anchor="middle" class="sub">scripts/train_drl.py</text>
+  <text x="851" y="139" text-anchor="middle" class="sub">Stable-Baselines3 + PyTorch</text>
+  <text x="851" y="153" text-anchor="middle" class="sub">5 algos × 2 universes</text>
+  <text x="851" y="167" text-anchor="middle" class="sub">2015–2022 US data</text>
+  <text x="851" y="186" text-anchor="middle" class="sub">→ 10 ONNX policies (git)</text>
+  <line x1="754" y1="180" x2="710" y2="240" class="edge-data" marker-end="url(#arr)"/>
+  <text x="748" y="214" text-anchor="middle" class="sub">ONNX</text>
 
-  <rect x="60" y="395" width="170" height="64" class="node-accent"/>
-  <text x="145" y="416" text-anchor="middle" class="lbl">Prometheus</text>
-  <text x="145" y="432" text-anchor="middle" class="sub">recording + alert rules</text>
-  <text x="145" y="446" text-anchor="middle" class="sub">burn-rate SLO alerts</text>
+  <!-- ───────── REFERENCE: Kubernetes ───────── -->
+  <rect x="32" y="330" width="916" height="150" class="grp-ref"/>
+  <text x="50" y="348" class="grp-title">▢ REFERENCE PRODUCTION TARGET — KUBERNETES (helm lint + kubeconform in CI · not running on a live cluster)</text>
 
-  <rect x="250" y="395" width="170" height="64" class="node-accent"/>
-  <text x="335" y="416" text-anchor="middle" class="lbl">Grafana Cloud</text>
-  <text x="335" y="432" text-anchor="middle" class="sub">RED + SLO dashboard</text>
-  <text x="335" y="446" text-anchor="middle" class="sub">10 panels · 30s refresh</text>
+  <rect x="50" y="362" width="165" height="64" class="node-ref"/>
+  <text x="132" y="383" text-anchor="middle" class="lbl">Helm chart</text>
+  <text x="132" y="399" text-anchor="middle" class="sub">HPA · PDB · NetworkPolicy</text>
+  <text x="132" y="413" text-anchor="middle" class="sub">ServiceMonitor · probes</text>
 
-  <rect x="440" y="395" width="170" height="64" class="node"/>
-  <text x="525" y="416" text-anchor="middle" class="lbl">SLOs</text>
-  <text x="525" y="432" text-anchor="middle" class="sub">99.5% avail · p95 &lt; 1s</text>
-  <text x="525" y="446" text-anchor="middle" class="sub">30d rolling window</text>
+  <rect x="235" y="362" width="165" height="64" class="node-ref"/>
+  <text x="317" y="383" text-anchor="middle" class="lbl">ArgoCD</text>
+  <text x="317" y="399" text-anchor="middle" class="sub">ApplicationSet</text>
+  <text x="317" y="413" text-anchor="middle" class="sub">dev · staging · prod</text>
 
-  <rect x="630" y="395" width="170" height="64" class="node"/>
-  <text x="715" y="416" text-anchor="middle" class="lbl">Runbook</text>
-  <text x="715" y="432" text-anchor="middle" class="sub">per-alert playbook</text>
-  <text x="715" y="446" text-anchor="middle" class="sub">postmortem template</text>
+  <rect x="420" y="362" width="165" height="64" class="node-ref"/>
+  <text x="502" y="383" text-anchor="middle" class="lbl">Terraform</text>
+  <text x="502" y="399" text-anchor="middle" class="sub">Fly · Cloudflare</text>
+  <text x="502" y="413" text-anchor="middle" class="sub">Grafana Cloud</text>
 
-  <rect x="820" y="395" width="100" height="64" class="node"/>
-  <text x="870" y="416" text-anchor="middle" class="lbl">PagerDuty</text>
-  <text x="870" y="432" text-anchor="middle" class="sub">page on burn</text>
+  <rect x="605" y="362" width="165" height="64" class="node-ref"/>
+  <text x="687" y="383" text-anchor="middle" class="lbl">Prometheus</text>
+  <text x="687" y="399" text-anchor="middle" class="sub">recording + burn-rate</text>
+  <text x="687" y="413" text-anchor="middle" class="sub">SLO alerts → runbook</text>
 
-  <line x1="810" y1="316" x2="145" y2="395" class="edge-data" marker-end="url(#arr)"/>
-  <line x1="230" y1="427" x2="250" y2="427" class="edge" marker-end="url(#arr)"/>
-  <line x1="610" y1="427" x2="630" y2="427" class="edge" marker-end="url(#arr)"/>
-  <line x1="800" y1="427" x2="820" y2="427" class="edge" marker-end="url(#arr)"/>
+  <rect x="790" y="362" width="140" height="64" class="node-ref"/>
+  <text x="860" y="383" text-anchor="middle" class="lbl">Grafana</text>
+  <text x="860" y="399" text-anchor="middle" class="sub">RED + SLO dash</text>
+  <text x="860" y="413" text-anchor="middle" class="sub">(committed JSON)</text>
 
-  <rect x="60" y="475" width="320" height="50" class="node"/>
-  <text x="220" y="494" text-anchor="middle" class="sub">GitHub Actions: lint · test · trivy</text>
-  <text x="220" y="508" text-anchor="middle" class="sub">multi-arch build → GHCR → ArgoCD</text>
+  <text x="50" y="446" class="sub">These manifests are validated in CI and would deploy to any cluster — kept as the SRE artifact, not stood up 24/7 for a demo.</text>
 
-  <rect x="400" y="475" width="200" height="50" class="node"/>
-  <text x="500" y="494" text-anchor="middle" class="sub">ArgoCD ApplicationSet</text>
-  <text x="500" y="508" text-anchor="middle" class="sub">dev → staging → prod</text>
+  <!-- ───────── CI/CD ───────── -->
+  <rect x="32" y="500" width="916" height="120" class="grp"/>
+  <text x="50" y="518" class="grp-title">CI / CD — GITHUB ACTIONS</text>
 
-  <rect x="620" y="475" width="180" height="50" class="node"/>
-  <text x="710" y="494" text-anchor="middle" class="sub">Helm chart</text>
-  <text x="710" y="508" text-anchor="middle" class="sub">HPA · PDB · NetPol · SM</text>
+  <rect x="50" y="532" width="260" height="64" class="node"/>
+  <text x="180" y="553" text-anchor="middle" class="lbl">ci.yml</text>
+  <text x="180" y="569" text-anchor="middle" class="sub">ruff · pytest (15) · eslint · tsc</text>
+  <text x="180" y="583" text-anchor="middle" class="sub">trivy · helm lint · kubeconform</text>
 
-  <rect x="820" y="475" width="100" height="50" class="node"/>
-  <text x="870" y="494" text-anchor="middle" class="sub">Terraform</text>
-  <text x="870" y="508" text-anchor="middle" class="sub">cloud infra</text>
+  <rect x="330" y="532" width="260" height="64" class="node"/>
+  <text x="460" y="553" text-anchor="middle" class="lbl">deploy.yml</text>
+  <text x="460" y="569" text-anchor="middle" class="sub">multi-arch build → GHCR</text>
+  <text x="460" y="583" text-anchor="middle" class="sub">Render auto-deploys on push</text>
 
-  <line x1="380" y1="500" x2="400" y2="500" class="edge" marker-end="url(#arr)"/>
-  <line x1="600" y1="500" x2="620" y2="500" class="edge" marker-end="url(#arr)"/>
+  <rect x="610" y="532" width="320" height="64" class="node"/>
+  <text x="770" y="553" text-anchor="middle" class="lbl">load-test.yml · helm-release.yml</text>
+  <text x="770" y="569" text-anchor="middle" class="sub">k6 smoke nightly · chart packaged</text>
+  <text x="770" y="583" text-anchor="middle" class="sub">tests/load · tests/chaos</text>
 
-  <text x="490" y="580" text-anchor="middle" class="sub">SRE-for-ML · five DRL agents · classical optimizers · live deployment · GitOps · burn-rate alerts</text>
+  <line x1="310" y1="564" x2="330" y2="564" class="edge" marker-end="url(#arr)"/>
+  <line x1="590" y1="564" x2="610" y2="564" class="edge" marker-end="url(#arr)"/>
+
+  <text x="490" y="644" text-anchor="middle" class="sub">Live demo on Render · Kubernetes/GitOps as portable reference · 5 deep-RL agents served via ONNX · classical optimizers · live US data</text>
 </svg>
