@@ -21,6 +21,58 @@ export type RunRequest = {
 const DEFAULT_UNIVERSE_NAME = 'MAG7';
 const DEFAULT_TICKERS = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA'];
 
+// Hardcoded fallback so the UI works even if /api/v1/universes 502s on cold start
+const FALLBACK_UNIVERSES: Universe[] = [
+  {
+    name: 'DOW30',
+    description: 'Dow Jones Industrial Average — 30 US large caps. Trained DRL agents available (5 algos).',
+    tickers: [
+      'AAPL', 'AMGN', 'AMZN', 'AXP', 'BA', 'CAT', 'CRM', 'CSCO', 'CVX', 'DIS',
+      'GS', 'HD', 'HON', 'IBM', 'JNJ', 'JPM', 'KO', 'MCD', 'MMM', 'MRK',
+      'MSFT', 'NKE', 'NVDA', 'PG', 'SHW', 'TRV', 'UNH', 'V', 'VZ', 'WMT',
+    ],
+  },
+  {
+    name: 'MAG7',
+    description: 'Magnificent 7 — the dominant US mega-caps. Trained DRL agents available (5 algos).',
+    tickers: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA'],
+  },
+  {
+    name: 'FAANG',
+    description: 'Classic FAANG: META, AAPL, AMZN, NFLX, GOOGL.',
+    tickers: ['META', 'AAPL', 'AMZN', 'NFLX', 'GOOGL'],
+  },
+  {
+    name: 'TECH_GIANTS',
+    description: 'Top US tech mega-caps.',
+    tickers: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'AVGO', 'ORCL', 'ADBE'],
+  },
+  {
+    name: 'DIVIDEND_KINGS',
+    description: 'Dividend Aristocrats subset — income-focused.',
+    tickers: [
+      'KO', 'PG', 'JNJ', 'MMM', 'CL', 'PEP', 'MCD', 'WMT', 'T', 'VZ',
+      'CVX', 'XOM', 'ABBV', 'EMR', 'IBM', 'MO', 'ABT', 'TGT', 'ADP', 'LOW',
+    ],
+  },
+];
+
+const FALLBACK_BENCHMARKS: Record<string, string> = {
+  SPY: 'S&P 500 (SPDR)',
+  DIA: 'Dow Jones Industrial Average (SPDR)',
+  QQQ: 'NASDAQ-100 (Invesco)',
+  IWM: 'Russell 2000 (iShares small-cap)',
+  VTI: 'Total US Stock Market (Vanguard)',
+  VOO: 'S&P 500 (Vanguard)',
+};
+
+const FALLBACK_DRL_MAP: Record<string, string> = {
+  drl_ppo_dow30: 'DOW30', drl_a2c_dow30: 'DOW30', drl_ddpg_dow30: 'DOW30',
+  drl_sac_dow30: 'DOW30', drl_td3_dow30: 'DOW30',
+  drl_ppo_mag7: 'MAG7', drl_a2c_mag7: 'MAG7', drl_ddpg_mag7: 'MAG7',
+  drl_sac_mag7: 'MAG7', drl_td3_mag7: 'MAG7',
+};
+
 export function ControlPanel({
   onRun,
   loading,
@@ -28,9 +80,9 @@ export function ControlPanel({
   onRun: (req: RunRequest) => void;
   loading: boolean;
 }) {
-  const [universes, setUniverses] = useState<Universe[]>([]);
-  const [benchmarks, setBenchmarks] = useState<Record<string, string>>({});
-  const [drlMap, setDrlMap] = useState<Record<string, string>>({});
+  const [universes, setUniverses] = useState<Universe[]>(FALLBACK_UNIVERSES);
+  const [benchmarks, setBenchmarks] = useState<Record<string, string>>(FALLBACK_BENCHMARKS);
+  const [drlMap, setDrlMap] = useState<Record<string, string>>(FALLBACK_DRL_MAP);
   const [universeName, setUniverseName] = useState(DEFAULT_UNIVERSE_NAME);
   const [tickers, setTickers] = useState<string[]>(DEFAULT_TICKERS);
   const [strategies, setStrategies] = useState<string[]>([
@@ -45,9 +97,23 @@ export function ControlPanel({
   const [benchmark, setBenchmark] = useState<string>('SPY');
 
   useEffect(() => {
-    api.universes().then(setUniverses).catch(console.error);
-    api.benchmarks().then(setBenchmarks).catch(console.error);
-    api.strategyUniverseMap().then(setDrlMap).catch(console.error);
+    // Try to refresh from the server, but the fallbacks above keep the UI
+    // working if the api is sleeping / cold-starting (Render free tier).
+    api.universes()
+      .then((u) => {
+        if (u && u.length > 0) setUniverses(u);
+      })
+      .catch((e) => console.warn('universes fetch failed, using fallback', e));
+    api.benchmarks()
+      .then((b) => {
+        if (b && Object.keys(b).length > 0) setBenchmarks(b);
+      })
+      .catch((e) => console.warn('benchmarks fetch failed, using fallback', e));
+    api.strategyUniverseMap()
+      .then((m) => {
+        if (m && Object.keys(m).length > 0) setDrlMap(m);
+      })
+      .catch((e) => console.warn('strategy map fetch failed, using fallback', e));
   }, []);
 
   const activeUniverse = universes.find((u) => u.name === universeName)?.tickers ?? [];
