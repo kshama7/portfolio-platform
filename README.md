@@ -34,7 +34,7 @@ I trained five deep reinforcement-learning agents to allocate a portfolio across
 
 ## Why this project exists
 
-I'm a Site Reliability Engineer ([IBM — EASeJ + IBM MQ](https://www.linkedin.com/in/kshama-bhatt-28941724a)) heading to UPenn for a Masters in Fall 2026. My day job is OpenShift / ArgoCD / Prometheus / SOC2 and leading Sev1/Sev2 on-call. My undergraduate capstone was deep RL for portfolio optimization — but it lived in Jupyter notebooks.
+My undergraduate capstone was deep RL for portfolio optimization — but it lived in Jupyter notebooks.
 
 This repo is the bridge: I took that ML research and rebuilt it as a service I'd be comfortable running on-call. **The optimizer is the payload; the production engineering around it is the point.**
 
@@ -149,4 +149,4 @@ The DRL research originated in two undergraduate projects of mine —
 and [kshama7/capstone](https://github.com/kshama7/capstone). Those are preserved as
 historical artifacts; this repo is the production rebuild.
 
-— [Kshama Bhatt](https://www.linkedin.com/in/kshama-bhatt-28941724a) · kshama.bhatt7 @ gmail
+— [Kshama Bhatt](https://www.linkedin.com/in/kshama-bhatt-28941724a) · kshama.bhatt7@gmail.com
