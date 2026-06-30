@@ -161,4 +161,12 @@ The DRL research originated in two undergraduate projects of mine —
 and [kshama7/capstone](https://github.com/kshama7/capstone). Those are preserved as
 historical artifacts; this repo is the production rebuild.
 
+---
+
+## License
+
+[MIT](LICENSE) © Kshama Bhatt
+
+---
+
 — [Kshama Bhatt](https://www.linkedin.com/in/kshama-bhatt-28941724a) · kshama.bhatt7@gmail.com
